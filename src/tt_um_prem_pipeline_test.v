@@ -1,7 +1,7 @@
 `default_nettype none
 `timescale 1ns/1ps
 
-module tt_um_prem_uart (
+module tt_um_prem_pipeline_test (
     input  wire [7:0] ui_in,    // Dedicated inputs (unused for UART now)
     output wire [7:0] uo_out,   // Dedicated outputs
     input  wire [7:0] uio_in,   // IOs: Input path
