@@ -29,7 +29,7 @@ that can be driven / tested by the cocotb test.py
   wire tx;
   assign tx = uo_out[0];
 
-  tt_um_prem_uart tt_um_pipeline_test (
+  tt_um_prem_pipeline_test tt_um_prem_pipeline_test (
       // include power ports for the Gate Level test
 `ifdef GL_TEST
       .VPWR(1'b1),
