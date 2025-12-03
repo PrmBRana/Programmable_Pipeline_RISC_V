@@ -4,8 +4,8 @@
 module pipeline(
     input  wire clk,
     input  wire reset,
-    output wire [31:0] PC_OUT,
-    output wire [31:0] DATA_MEM_OUT_TOP
+    input  wire rx,
+    output wire tx
 );
     // wires
     wire [31:0] PCPLUS4_top, PC_top, PCF, Instruction1_out, INSTRUCTION;
@@ -25,6 +25,25 @@ module pipeline(
     wire [2:0] FUN3_top, FUN3E_top, FUN3M_top;
     wire [4:0] RdE_top, RdM_top, Rs1E_top, Rs2E_top, RdW_top;
 
+        // ----------------- UART Signals -------------------
+    wire [7:0] uart_rx_data;
+    wire       uart_rx_ready;
+    wire [7:0] boot_tx_data;
+    wire       boot_tx_start;
+    wire       uart_tx_busy;
+
+    //-------------------Bootloader-----------------------
+    wire        Write_enable;
+    wire [7:0]  mem_addr;
+    wire [31:0] mem_wdata;
+
+    // stall produced by bootloader: asserted while loading
+    wire stall_Pro;
+
+    // combine hazard stalls with bootloader stall:
+    // if either requests a stall, pipeline should freeze
+    wire StallF_net = stall_Pro | StallF_top;
+    wire StallD_net = stall_Pro | StallD_top;
     //-------------------------------Instruction Fetch--------------------
     // Program Counter Increment 
     PC_incre PC(
@@ -45,21 +64,69 @@ module pipeline(
         .clk(clk),
         .reset(reset),
         .PCF_in(PC_top),
-        .stallF(StallF_top),
+        .stallF(StallF_net),
         .PCF_out(PCF)
     );
 
-    // Instruction Memory
-    Ins_Mem Ins_mem_top(
-        .read_Address(PCF),
-        .Instruction_out(Instruction1_out)
+   
+    // ---------------- UART Loader and Instruction Memory -----------------
+    // ==============================
+    // UART module
+    // ==============================
+    uart_Tx_fixed #(
+        .CLK_FREQ(50_000_000),
+        .BAUD_RATE(115_200),
+        .OVERSAMPLE(16)
+    ) uart_inst (
+        .clk(clk),
+        .reset(reset),
+        // Transmitter
+        .tx_Start(boot_tx_start),
+        .tx_Data(boot_tx_data),
+        .tx(tx),
+        .tx_busy(uart_tx_busy),
+        // Receiver
+        .rx(rx),
+        .rx_Data(uart_rx_data),
+        .rx_ready(uart_rx_ready)
+    );
+
+    // ==============================
+    // Bootloader module
+    // ==============================
+    uart_bootloader boot_inst (
+        .clk(clk),
+        .reset(reset),
+        .rx_data(uart_rx_data),
+        .rx_valid(uart_rx_ready),
+        .tx_data(boot_tx_data),
+        .tx_start(boot_tx_start),
+        .mem_we(Write_enable),
+        .mem_addr(mem_addr),
+        .mem_wdata(mem_wdata),
+        .stall_pro(stall_Pro)
+        
+    );
+
+    //===============================
+    // 1KB 32-bit flipflop memory
+    //===============================
+    mem1KB_32bit flipflop(
+        .clk(clk),
+        .reset(reset),
+        .we(Write_enable),
+        .addr(mem_addr),    // connect to bootloader
+        .wdata(mem_wdata),  // connect to bootloader
+        .read_Address(PCF), // PCF provided as full 32-bit byte-address; mem1KB_32bit should index [9:2]
+        .Instruction_out(Instruction1_out)   // optional, for reading
+        
     );
 
     //----------------------------Instruction Decode------------------------------------
     IF_ID_stage IF_DF_top(
         .clk(clk),
         .reset(reset),
-        .stallD(StallD_top),
+        .stallD(StallD_net),
         .flushD(FlushD_top),
         .PC_in(PCF),
         .PCplus4_in(PCPLUS4_top),
@@ -291,7 +358,4 @@ module pipeline(
         .Forward_AE(ForwardAE_top),
         .Forward_BE(ForwardBE_top)
     );
-    // ------------------- Debug signal assignments -------------------
-    assign PC_OUT = PCF;
-    assign DATA_MEM_OUT_TOP    = ResultW_top;
 endmodule
