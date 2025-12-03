@@ -94,7 +94,7 @@ module pipeline(
     // ==============================
     // Bootloader module
     // ==============================
-    uart_bootloader boot_inst (
+    uart_bootloader uart_bootloader (
         .clk(clk),
         .reset(reset),
         .rx_data(uart_rx_data),
@@ -104,8 +104,7 @@ module pipeline(
         .mem_we(Write_enable),
         .mem_addr(mem_addr),
         .mem_wdata(mem_wdata),
-        .stall_pro(stall_Pro)
-        
+        .stall_pro(stall_Pro)    
     );
 
     //===============================
