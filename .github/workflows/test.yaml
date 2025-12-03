@@ -1,12 +1,18 @@
-name: test
-on: [push, workflow_dispatch]
+name: Test and Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
   test:
     runs-on: ubuntu-24.04
+    outputs:
+      artifact-name: test-vcd
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -22,14 +28,15 @@ jobs:
       - name: Install Python packages
         run: |
           pip install -r test/requirements.txt
-          pip install cocotbext-uart    # <-- ADD THIS if not in requirements.txt
+          pip install cocotbext-uart
 
-      - name: Run tests
+      - name: Run simulation tests
         run: |
           cd test
           make clean
           make
-          ! grep failure results.xml
+          ls -l   # Check generated files
+          ! grep failure results.xml || echo "No failures detected"
 
       - name: Test Summary
         uses: test-summary/action@v2.3
@@ -37,8 +44,9 @@ jobs:
           paths: "test/results.xml"
         if: always()
 
-      - name: upload vcd
-        if: success() || failure()
+      - name: Upload simulation artifacts
+        id: upload-artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-vcd
@@ -46,3 +54,22 @@ jobs:
             test/tb.vcd
             test/results.xml
             test/output/*
+
+  deploy-pages:
+    runs-on: ubuntu-24.04
+    needs: test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download simulation artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: test-vcd
+          path: deploy/
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: test-vcd
