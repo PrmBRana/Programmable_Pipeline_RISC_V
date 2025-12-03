@@ -35,12 +35,14 @@ project:
     - "Reg_File.v" 
     - "Write_back.v"
     - "WriteBack_stage.v"
+    - "uart.v"
+    - "uart_bootloader.v"
 
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
 # This section is for the datasheet/website. Use descriptive names (e.g., RX, TX, MOSI, SCL, SEG_A, etc.).
 pinout:
   # Inputs
-  ui[0]: ""
+  ui[0]: "rx"
   ui[1]: ""
   ui[2]: ""
   ui[3]: ""
@@ -50,8 +52,8 @@ pinout:
   ui[7]: ""
 
   # Outputs
-  uo[0]: "PC_OUT"
-  uo[1]: "DATA_MEM_OUT_TOP"
+  uo[0]: "tx"
+  uo[1]: ""
   uo[2]: ""
   uo[3]: ""
   uo[4]: ""
