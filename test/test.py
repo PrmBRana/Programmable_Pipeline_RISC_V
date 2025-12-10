@@ -41,13 +41,13 @@ async def test_uart_bootloader(dut):
         
         # Send instructions
         instructions = [0x00000013, #first instruction 
-                        0x019886b3, #add x13, x17, x17 --R-type
+                        0x019886b3, #add x13, x17, x25 --R-type
                         0x403402b3, #sub x5, x8, x3 --R-type
                         0x3e820293, #addi x5, x4, 1000 --I-type
                         0x00512023, #sw x5, 0(x2) --S-type
                         0x00012183, #lw x3, 0(x2) --I-type
-                        0x06208263, #beq x1, x2, 100
-                        0x00000000        
+                        0x06208263, #beq x1, x2, 100 --B-type 
+                        0x00000000  #last instruction    
         ]
         
         for inst in instructions:
