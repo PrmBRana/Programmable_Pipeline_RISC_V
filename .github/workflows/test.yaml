@@ -8,11 +8,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-24.04
-    outputs:
-      artifact-name: test-vcd
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -35,41 +33,26 @@ jobs:
           cd test
           make clean
           make
-          ls -l   # Check generated files
-          ! grep failure results.xml || echo "No failures detected"
 
-      - name: Test Summary
-        uses: test-summary/action@v2.3
-        with:
-          paths: "test/results.xml"
-        if: always()
+      - name: Prepare pages folder
+        run: |
+          mkdir -p public
+          cp test/tb.vcd public/
+          cp test/results.xml public/
+          cp -r test/output public/
 
-      - name: Upload simulation artifacts
-        id: upload-artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: test-vcd
-          path: |
-            test/tb.vcd
-            test/results.xml
-            test/output/*
+          path: public
 
   deploy-pages:
     runs-on: ubuntu-24.04
     needs: test
+    permissions:
+      pages: write
+      id-token: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Download simulation artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: test-vcd
-          path: deploy/
-
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
-        with:
-          artifact_name: test-vcd
