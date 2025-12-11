@@ -1,6 +1,6 @@
 # Tiny Tapeout project information
 project:       
-  title:        "Pipeline-test"      # Project title
+  title:        "programmable_Pipeline-test"      # Project title
   author:       "Prem"      # Your name
   discord:      "prem_42503"      # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
   description:  "Zero to ASIC demo project"      # One line description of what your project does

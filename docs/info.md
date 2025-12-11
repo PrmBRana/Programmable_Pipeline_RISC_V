@@ -8,7 +8,7 @@ You can also include images in this folder and reference them in the markdown. E
 -->
 ## How it work
 
-This project is a RISC-V pipelined processor with a 5-stage pipeline. It allows multiple instruction to be processed simultaneously.
+This project is a programmable RISC-V pipelined processor with a 5-stage pipeline. It allows program via UART and multiple instruction to be processed simultaneously.
 
 ## How to test
 

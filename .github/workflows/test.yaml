@@ -1,58 +1,48 @@
-name: Test and Deploy
-
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:
-
+name: test
+on: [push, workflow_dispatch]
 jobs:
   test:
     runs-on: ubuntu-24.04
-
     steps:
-      - name: Checkout
+      - name: Checkout repo
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
       - name: Install iverilog
+        shell: bash
         run: sudo apt-get update && sudo apt-get install -y iverilog
 
-      - name: Setup Python
+      # Set Python up and install cocotb
+      - name: Setup python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Install Python packages
-        run: |
-          pip install -r test/requirements.txt
-          pip install cocotbext-uart
+        shell: bash
+        run: pip install -r test/requirements.txt
 
-      - name: Run simulation tests
+      - name: Run tests
         run: |
           cd test
           make clean
           make
+          # make will return success even if the test fails, so check for failure in the results.xml
+          ! grep failure results.xml
 
-      - name: Prepare pages folder
-        run: |
-          mkdir -p public
-          cp test/tb.vcd public/
-          cp test/results.xml public/
-          cp -r test/output public/
-
-      - name: Upload GitHub Pages artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Test Summary
+        uses: test-summary/action@v2.3
         with:
-          path: public
+          paths: "test/results.xml"
+        if: always()
 
-  deploy-pages:
-    runs-on: ubuntu-24.04
-    needs: test
-    permissions:
-      pages: write
-      id-token: write
-
-    steps:
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4
+      - name: upload vcd
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-vcd
+          path: |
+            test/tb.vcd
+            test/results.xml
+            test/output/*
