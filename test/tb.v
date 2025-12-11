@@ -6,6 +6,7 @@ module tb();
     initial begin
         $dumpfile("tb.vcd");
         $dumpvars(0, tb);
+        #1;
     end
 
 /*
@@ -38,8 +39,8 @@ that can be driven / tested by the cocotb test.py
   tt_um_prem_pipeline_test tt_um_prem_pipeline_test (
       // include power ports for the Gate Level test
 `ifdef GL_TEST
-      .VPWR(1'b1),
-      .VGND(1'b0),
+      .VPWR(VPWR),
+      .VGND(VGND),
 `endif
     .ui_in({7'b0, rx}),    // Dedicated inputs (unused for UART now)
     .uo_out(uo_out),   // Dedicated outputs
